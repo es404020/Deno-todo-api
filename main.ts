@@ -1,6 +1,7 @@
 import { App, Request, Response,logger,parser } from "https://deno.land/x/attain/mod.ts";
 import { init, MongoClient } from "https://deno.land/x/mongo@v0.6.0/mod.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
+
 await init();
 const client = new MongoClient();
 client.connectWithUri(
@@ -12,6 +13,32 @@ const users= db.collection('users');
 const app = new App();
 app.use(logger);
 app.use(parser);
+
+const middleware=(req:Request,res:Response)=>{
+  console.log('my middle way');
+}
+
+app.use(middleware,(req,res)=>{
+
+ let header= req.headers;
+ var obj = new Headers(header);
+ var auth= obj.get('authorization') as any;
+ const token = auth?.toString().split(' ')[1];
+
+ const url='http://localhost:3500'
+
+if(req.url.toString()==url+'/auth' || req.url.toString()==url+'/reg' || req.url.toString()==url   ){
+
+  
+}else{
+if(token==null)res.status(400).send({status:'Missing token'});
+if(vali)
+
+}
+
+
+
+})
 
 app.get("/",  (req, res) => {
   
