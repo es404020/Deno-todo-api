@@ -2,6 +2,15 @@ import { App, Request, Response,logger,parser } from "https://deno.land/x/attain
 import { init, MongoClient } from "https://deno.land/x/mongo@v0.6.0/mod.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
 
+import { validateJwt } from "https://deno.land/x/djwt/validate.ts";
+import {
+    makeJwt,
+    setExpiration,
+    Jose,
+    Payload,
+} from "https://deno.land/x/djwt/create.ts";
+
+
 await init();
 const client = new MongoClient();
 client.connectWithUri(
@@ -11,6 +20,7 @@ const db = client.database('test');
 const todo= db.collection('todos');
 const users= db.collection('users');
 const app = new App();
+const key="denos";
 app.use(logger);
 app.use(parser);
 
@@ -18,7 +28,7 @@ const middleware=(req:Request,res:Response)=>{
   console.log('my middle way');
 }
 
-app.use(middleware,(req,res)=>{
+app.use(middleware,async (req,res)=>{
 
  let header= req.headers;
  var obj = new Headers(header);
@@ -32,7 +42,22 @@ if(req.url.toString()==url+'/auth' || req.url.toString()==url+'/reg' || req.url.
   
 }else{
 if(token==null)res.status(400).send({status:'Missing token'});
-if(vali)
+
+
+try{
+
+  if( await validateJwt(token,key)){
+
+  }
+  else{
+    res.status(400).send({status:"Bad token"});
+  }
+
+
+}catch(err){
+  res.status(400).send({status:"Bad token"});
+}
+
 
 }
 
@@ -173,6 +198,71 @@ try{
 
 
   })
+
+
+  app.post("/auth",async (req,res)=>{
+   
+ try{
+
+  const user:any = await validate(req);
+
+  const payload:Payload={
+    iss:user._id.$oid,
+  }
+
+  const header:Jose={
+    alg:"HS256",
+    typ:"JWT"
+  }
+
+const token = makeJwt({header,payload,key});
+
+res.status(200).send({
+token:token,
+_id:user._id.$oid
+});
+
+
+
+
+ }
+catch(err){
+
+res.status(400).send(err);
+
+}
+
+  })
+
+
+  function validate(req:any){
+    const {email, password} = req.params;
+
+
+
+    return new Promise(async (resolve,reject)=>{
+
+try{
+
+  const user = await users.findOne({email:email});
+
+  const pwdValidate = bcrypt.checkpw(password,user.password);
+ 
+  if(pwdValidate){
+    resolve(user);
+  }
+  else{
+    reject('Authentication failed.')
+  }
+  
+
+}catch(err){
+  reject('Authentication failed.')
+}
+
+
+    })
+  }
 
 app.listen({ port: 3500 });
 
