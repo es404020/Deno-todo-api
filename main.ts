@@ -2,7 +2,6 @@ import { App, Request, Response,logger,parser } from "https://deno.land/x/attain
 import { init, MongoClient } from "https://deno.land/x/mongo@v0.6.0/mod.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
 
-
 import { validateJwt } from "https://deno.land/x/djwt/validate.ts";
 import {
     makeJwt,
@@ -10,6 +9,7 @@ import {
     Jose,
     Payload,
 } from "https://deno.land/x/djwt/create.ts";
+
 
 await init();
 const client = new MongoClient();
@@ -23,6 +23,47 @@ const app = new App();
 const key="denos";
 app.use(logger);
 app.use(parser);
+
+const middleware=(req:Request,res:Response)=>{
+  console.log('my middle way');
+}
+
+app.use(middleware,async (req,res)=>{
+
+ let header= req.headers;
+ var obj = new Headers(header);
+ var auth= obj.get('authorization') as any;
+ const token = auth?.toString().split(' ')[1];
+
+ const url='http://localhost:3500'
+
+if(req.url.toString()==url+'/auth' || req.url.toString()==url+'/reg' || req.url.toString()==url   ){
+
+  
+}else{
+if(token==null)res.status(400).send({status:'Missing token'});
+
+
+try{
+
+  if( await validateJwt(token,key)){
+
+  }
+  else{
+    res.status(400).send({status:"Bad token"});
+  }
+
+
+}catch(err){
+  res.status(400).send({status:"Bad token"});
+}
+
+
+}
+
+
+
+})
 
 app.get("/",  (req, res) => {
   
