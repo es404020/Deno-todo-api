@@ -1,7 +1,17 @@
 import { App, Request, Response,logger,parser } from "https://deno.land/x/attain/mod.ts";
 import { init, MongoClient } from "https://deno.land/x/mongo@v0.6.0/mod.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
+import * as flags from "https://deno.land/std/flags/mod.ts";
 
+const { args, exit } = Deno;
+const DEFAULT_PORT = 8080;
+const argPort = flags.parse(args).port;
+const port = argPort ? Number(argPort) : DEFAULT_PORT;
+
+if (isNaN(port)) {
+  console.log("port is not number");
+  exit(1);
+}
 import { validateJwt } from "https://deno.land/x/djwt/validate.ts";
 import {
     makeJwt,
@@ -264,6 +274,6 @@ try{
     })
   }
 
-app.listen({ port: 3500 });
+app.listen({ port });
 
 console.log("http://localhost:3500");
